@@ -105,16 +105,6 @@ declaration
   : declaration_specifiers ';' { $$ = new Declaration($1, nullptr); }
   | declaration_specifiers init_declarator_list ';' { $$ = new Declaration($1, NodePtr($2)); }
   | STRUCT IDENTIFIER IDENTIFIER ';' { $$ = new StructVarDeclaration(*$2, *$3); delete $2; delete $3; }
-
-  | TYPEDEF type_specifier IDENTIFIER ';' {
-      $$ = new Declaration(TypeSpecifier::VOID, nullptr);
-      delete $3;
-  }
-
-  | IDENTIFIER IDENTIFIER ';' {
-      $$ = new Declaration(TypeSpecifier::INT, NodePtr(new InitDeclarator(NodePtr(new Identifier(*$2)), nullptr)));
-      delete $1; delete $2;
-  }
   ;
 
 init_declarator_list
@@ -140,7 +130,6 @@ type_specifier
   | CHAR { $$ = TypeSpecifier::CHAR; }
   | VOID { $$ = TypeSpecifier::VOID; }
   | STRUCT { $$ = TypeSpecifier::STRUCT; }
-  | UNSIGNED { $$ = TypeSpecifier::INT; }
   ;
 
 declarator
@@ -189,8 +178,6 @@ statement
   | selection_statement { $$ = $1; }
 	| iteration_statement { $$ = $1; }
 	| compound_statement  { $$ = $1; }  // {} inside if
-  | CASE INT_CONSTANT ':' statement { $$ = new CaseStatement($2, NodePtr($4)); }
-  | DEFAULT ':' statement { $$ = new DefaultStatement(NodePtr($3)); }
 	;
 
 compound_statement
@@ -224,7 +211,6 @@ selection_statement
   | IF '(' expression ')' statement ELSE statement {
       $$ = new IfStatement(NodePtr($3), NodePtr($5), NodePtr($7));
   }
-  | SWITCH '(' expression ')' statement { $$ = new SwitchStatement(NodePtr($3), NodePtr($5)); }
   ;
 
 iteration_statement
@@ -246,7 +232,6 @@ jump_statement
 	| RETURN expression ';' {
 		$$ = new ReturnStatement(NodePtr($2));
 	}
-	| BREAK ';' { $$ = new BreakStatement(); }
   ;
 
 argument_expression_list
@@ -282,9 +267,6 @@ postfix_expression
       $$ = new StructMemberAccess(NodePtr($1), *$3);
       delete $3;
     }
-    | postfix_expression DEC_OP {
-      $$ = new PostDecExpression(NodePtr($1));
-    }
     ;
 
 unary_expression
@@ -299,10 +281,6 @@ unary_expression
     | '*' cast_expression
       { $$ = new DereferenceExpression(NodePtr($2)); }
     | SIZEOF unary_expression { $$ = new SizeOfExpression(NodePtr($2)); }
-    | SIZEOF '(' type_specifier ')' {
-      int s = ($3 == TypeSpecifier::CHAR) ? 1 : 4;
-      $$ = new IntConstant(s);
-  }
     ;
 
 cast_expression
@@ -403,9 +381,6 @@ assignment_expression
         $$ = new AssignmentExpression(NodePtr($1), NodePtr($3));
     }
     | conditional_expression { $$ = $1; }
-    | unary_expression ADD_ASSIGN assignment_expression {
-      $$ = new AddAssignExpression(NodePtr($1), NodePtr($3));
-    }
     ;
 
 expression

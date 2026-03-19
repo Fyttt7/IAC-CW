@@ -24,11 +24,6 @@ struct StructDef {
   std::map<std::string, int> member_offsets;
 };
 
-struct SwitchContext {
-  std::vector<std::pair<int, std::string>> cases;
-  std::string default_label = "";
-};
-
 class Context {
  private:
   int label_count_ = 0;
@@ -37,8 +32,6 @@ class Context {
   std::map<std::string, StructDef> structs_;
   int current_stack_offset_;
   const VarInfo* Lookup(const std::string& name) const;
-  std::vector<std::string> break_labels_;
-  std::vector<SwitchContext> switch_contexts_;
 
  public:
   std::string CreateLabel(std::string prefix, std::string suffix);
@@ -46,27 +39,6 @@ class Context {
   void Pop(std::ostream& s, std::string reg);
   void DefineStruct(const std::string& name, const StructDef& def);
   StructDef GetStruct(const std::string& name) const;
-  void PushBreakLabel(std::string lbl) { break_labels_.push_back(lbl); }
-  void PopBreakLabel() { break_labels_.pop_back(); }
-  std::string GetBreakLabel() const { return break_labels_.back(); }
-
-  void PushSwitchContext() { switch_contexts_.push_back(SwitchContext()); }
-  void PopSwitchContext() { switch_contexts_.pop_back(); }
-  void AddSwitchCase(int val, std::string lbl) {
-    switch_contexts_.back().cases.push_back({val, lbl});
-  }
-  void SetSwitchDefault(std::string lbl) {
-    switch_contexts_.back().default_label = lbl;
-  }
-  std::vector<std::pair<int, std::string>> GetCurrentSwitchCases() const {
-    return switch_contexts_.back().cases;
-  }
-  std::string GetSwitchDefault() const {
-    return switch_contexts_.back().default_label;
-  }
-  bool HasSwitchDefault() const {
-    return switch_contexts_.back().default_label != "";
-  }
 
   Context() : current_stack_offset_(-8) { EnterScope(); }
 
